@@ -1,0 +1,31 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "hello api",
+    "version": "v1"
+  },
+  "paths": {
+    "/hello": {
+      "get": {
+        "operationId": "Hello",
+        "responses": {
+          "200": {
+            "description": "Return a basic response body in JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hello": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

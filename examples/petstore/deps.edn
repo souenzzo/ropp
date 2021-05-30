@@ -1,0 +1,12 @@
+{:paths   ["src"]
+ :deps    {br.com.souenzzo/ropp         {:local/root "../.."},
+           cheshire/cheshire            {:mvn/version "5.10.0"},
+           com.wsscode/pathom3          {:git/url "https://github.com/wilkerlucio/pathom3",
+                                         :sha     "7d55e06f72d29574cf03636cbcae88aa613e3183"},
+           datascript/datascript        {:mvn/version "1.1.0"},
+           io.pedestal/pedestal.jetty   {:mvn/version "0.5.9"},
+           io.pedestal/pedestal.service {:mvn/version "0.5.9"},
+           org.clojure/clojure          {:mvn/version "1.10.3"}}
+ :aliases {:dev {:extra-pahts ["dev" "test"]
+                 :extra-deps  {org.clojure/test.check                 {:mvn/version "1.1.0"}
+                               midje/midje                            {:mvn/version "1.9.9"}}}}}
