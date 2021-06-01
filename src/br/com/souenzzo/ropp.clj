@@ -42,10 +42,15 @@
       ([result] result)
       ([result [target ident value]]
        (assoc-in result [target ident] value)))
-    (if-let [spec (get content content-type)]
-      {::body-params (json-schema/parse req spec
-                       (get req ({"application/json" :json-params} content-type)))}
-      {})
+    (assoc
+      (if-let [spec (get content content-type)]
+        {::body-params (json-schema/parse req spec
+                         (get req ({"application/json" :json-params} content-type)))}
+        {})
+      ::query-params {}
+      ::header-params {}
+      ::cookie-params {}
+      ::path-params {})
     parameters))
 
 (s/fdef params
@@ -91,14 +96,24 @@
                          {:name  ::tx-build
                           :enter (fn [{:keys [request]
                                        :as   ctx}]
-                                   (let [tx `[(~ident ~(params request))]
-                                         path [ident]]
-                                     (assoc ctx :request (assoc request
-                                                           ::tx tx
-                                                           ::path path))))}
-                         (fn [{::keys [tx path]
+                                   (let [read? (keyword? ident)
+                                         params (params request)
+                                         tx (if read?
+                                              `[~ident]
+                                              `[(~ident ~params)])
+                                         path [ident]
+                                         req (cond->
+                                               (assoc request
+                                                 ::tx tx
+                                                 ::path path)
+                                               read? (assoc ::input params))]
+
+                                     (assoc ctx :request req)))}
+                         (fn [{::keys [tx path input]
                                :as    req}]
-                           (-> (p.eql/process req tx)
+                           (-> (if input
+                                 (p.eql/process req input tx)
+                                 (p.eql/process req tx))
                              (get-in path)))])
                       :route-name (keyword ident)])]
     (-> raw-routes

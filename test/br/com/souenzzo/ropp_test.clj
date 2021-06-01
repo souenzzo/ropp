@@ -12,10 +12,10 @@
             [midje.sweet :refer [fact =>]]
             [ring.util.mime-type :as mime]))
 
-(pco/defresolver find-pets [env {::keys [petstore-db]}]
-  {::pco/params [::ropp/query-params]
-   ::pco/output [:petstore.operation/find-pets]}
-  (let [{::ropp/keys [query-params]} (pco/params env)]
+(pco/defresolver find-pets [env {::ropp/keys [query-params]
+                                 ::keys      [petstore-db]}]
+  {::pco/output [:petstore.operation/find-pets]}
+  (let []
     {:petstore.operation/find-pets {:body   (-> (for [[id name tag] (ds/q '[:find ?id ?name ?tag
                                                                             :in $
                                                                             :where
@@ -26,7 +26,7 @@
                                                   {:id   id
                                                    :name name
                                                    :tag  tag})
-                                              (->> (take (:limit query-params)))
+                                              (->> (take (:limit query-params 0)))
                                               json/generate-string)
                                     :status 200}}))
 
@@ -113,4 +113,3 @@
       (-> (response-for service-fn :get "/hello")
         :body)
       => "World")))
-

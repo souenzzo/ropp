@@ -4,10 +4,7 @@
            jinx/jinx                    {:mvn/version "0.1.6"}
            com.wsscode/pathom3          {:git/url "https://github.com/wilkerlucio/pathom3"
                                          :sha     "7d55e06f72d29574cf03636cbcae88aa613e3183"}}
- :aliases {:dev {:extra-paths ["dev" "test" "resources"
-                               "examples/petstore/dev"
-                               "examples/petstore/src"
-                               "examples/petstore/test"]
+ :aliases {:dev {:extra-paths ["dev" "test" "resources"]
                  :extra-deps  {org.clojure/clojure        {:mvn/version "1.10.3"}
                                org.clojure/test.check     {:mvn/version "1.1.0"}
                                midje/midje                {:mvn/version "1.9.9"}

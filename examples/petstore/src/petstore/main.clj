@@ -9,10 +9,10 @@
             [com.wsscode.pathom3.connect.operation :as pco]
             [datascript.core :as d]))
 
-(pco/defresolver find-pets [env {::keys [pets-db]}]
-  {::pco/params [::ropp/query-params]
-   ::pco/output [::find-pets]}
-  (let [{::ropp/keys [query-params]} (pco/params env)]
+(pco/defresolver find-pets [env {::ropp/keys [query-params]
+                                 ::keys      [pets-db]}]
+  {::pco/output [::find-pets]}
+  (let [{::ropp/keys [query-params]} query-params]
     {::find-pets {:body   (-> (for [[id name tag] (ds/q '[:find ?id ?name ?tag
                                                           :in $
                                                           :where
@@ -27,10 +27,10 @@
                             json/generate-string)
                   :status 200}}))
 
-(pco/defresolver find-pet-by-id [env {::keys [pets-db]}]
-  {::pco/params [::ropp/query-params]
-   ::pco/output [::find-pet-by-id]}
-  (let [{::ropp/keys [path-params]} (pco/params env)]
+(pco/defresolver find-pet-by-id [env {::ropp/keys [path-params]
+                                      ::keys      [pets-db]}]
+  {::pco/output [::find-pet-by-id]}
+  (let []
     {::find-pet-by-id {:body   (-> (for [[id name tag] (ds/q '[:find ?id ?name ?tag
                                                                :in $
                                                                :where
@@ -71,7 +71,7 @@
 
 (defn service
   [service-map]
-  (let [open-api (-> "OpenAPI-Specification/examples/v3.0/petstore-expanded.json"
+  (let [open-api (-> "../../OpenAPI-Specification/examples/v3.0/petstore-expanded.json"
                    io/reader
                    json/parse-stream)
         operation->ident {"findPets"       ::find-pets
