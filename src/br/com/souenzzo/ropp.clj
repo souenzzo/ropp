@@ -85,8 +85,12 @@
                         (remove nil?)
                         [{:name  ::on-error
                           :error (fn [ctx ex]
-                                   (.printStackTrace ex)
-                                   ctx)}
+                                   (let [{::keys [on-exception]} (p.eql/process env
+                                                                   {::ex ex}
+                                                                   [::on-exception])]
+                                     (if on-exception
+                                       (assoc ctx :response on-exception)
+                                       ctx)))}
                          (when (contains? operation "requestBody")
                            (body-params/body-params))
                          {:name  ::with-openapi

@@ -4,10 +4,13 @@
             [br.com.souenzzo.ropp :as ropp]
             [io.pedestal.http.route :as route]
             [com.wsscode.pathom3.connect.indexes :as pci]
+            [hiccup2.core :as h]
             [clojure.java.io :as io]
             [cheshire.core :as json]
             [com.wsscode.pathom3.connect.operation :as pco]
-            [datascript.core :as d]))
+            [datascript.core :as d]
+            [ring.util.mime-type :as mime])
+  (:import (java.nio.charset StandardCharsets)))
 
 (pco/defresolver find-pets [env {::ropp/keys [query-params]
                                  ::keys      [pets-db]}]
@@ -66,10 +69,11 @@
 
 
 (defn app
-  [_]
-  {::pets-conn (ds/create-conn)})
+  [service-map]
+  (assoc service-map
+    ::pets-conn (ds/create-conn)))
 
-(defn service
+(defn routes
   [service-map]
   (let [open-api (-> "../../OpenAPI-Specification/examples/v3.0/petstore-expanded.json"
                    io/reader
@@ -84,12 +88,66 @@
                ::ropp/open-api         open-api})
         routes (concat
                  (ropp/expand-routes env)
-                 (route/expand-routes `#{["/" :get ~(fn [_]
-                                                      {:status 202})
+                 (route/expand-routes `#{["/spec" :get ~(fn [_]
+                                                          {:body    (io/input-stream "../../OpenAPI-Specification/examples/v3.0/petstore-expanded.json")
+                                                           :headers {"Content-Type" (mime/default-mime-types "json")}
+                                                           :status  200})
+                                          :route-name ::spec]
+                                         ["/swagger-ui-dist/*path" :get ~(fn [{:keys [path-params]}]
+                                                                           (let [{:keys [path]} path-params
+                                                                                 body (some-> "META-INF/resources/webjars/swagger-ui-dist/3.37.2/"
+                                                                                        (str path)
+                                                                                        io/resource
+                                                                                        io/input-stream)]
+                                                                             (when body
+                                                                               {:body    body
+                                                                                :headers {"Content-Type" (mime/ext-mime-type path)}
+                                                                                :status  200})))
+                                          :route-name ::swagger-ui-dist]
+                                         ["/" :get ~(fn [_]
+                                                      {:body    (->> [:html
+                                                                      [:head
+                                                                       [:link {:rel  "icon"
+                                                                               :href "data:"}]
+                                                                       [:meta {:charset (str StandardCharsets/UTF_8)}]
+                                                                       [:link {:rel  "stylesheet"
+                                                                               :type "text/css"
+                                                                               :href "/swagger-ui-dist/swagger-ui.css"}]
+                                                                       [:script
+                                                                        {:src "/swagger-ui-dist/swagger-ui-bundle.js"}]
+                                                                       [:script
+                                                                        {:src "/swagger-ui-dist/swagger-ui-standalone-preset.js"}]
+                                                                       [:script
+                                                                        {:src "/swagger-ui-dist/swagger-ui-standalone-preset.js"}]
+                                                                       [:title "Hello"]]
+                                                                      [:body
+                                                                       [:div {:id "app"}]
+                                                                       [:script (h/raw "
+    let ui = SwaggerUIBundle({
+      url: '/spec',
+      dom_id: '#app',
+      deepLinking: true,
+      presets: [
+        SwaggerUIBundle.presets.apis,
+        SwaggerUIStandalonePreset
+      ],
+      layout: 'StandaloneLayout'
+    })
+")]]]
+                                                                  (h/html {:mode :html})
+                                                                  (str "<!DOCTYPE html>\n"))
+                                                       :headers {"Content-Security-Policy" ""
+                                                                 "Content-Type"            (mime/default-mime-types "html")}
+                                                       :status  200})
                                           :route-name ::index]}))]
-    (-> service-map
-      (merge env {::http/routes routes})
-      http/default-interceptors)))
+    routes))
+
+(defn service
+  [service-map]
+  (-> service-map
+    (assoc ::http/routes (fn []
+                           (routes service-map)))
+    http/default-interceptors))
 
 (defn -main
   [& _]
